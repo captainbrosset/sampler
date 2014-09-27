@@ -1,0 +1,154 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: arial;
+}
+
+.sampler {
+  width: 50vw;
+  height: 50vw;
+  margin-left: 25vw;
+  margin-top: 10vw;
+  box-sizing: border-box;
+  padding: 1vw 0 0 1vw;
+
+  background: #333;
+  border-radius: 1em;
+
+  position: relative;
+}
+
+.samples {
+  overflow: auto;
+}
+
+.samples, .sample-button {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.sample-button {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  float: left;
+  width: 15.6666667vw;
+  height: 15.6666667vw;
+  margin-right: .5vw;
+  margin-bottom: .5vw;
+
+  border-radius: .5em;
+  background: rgb(76, 158, 217);
+  box-shadow: inset 0 0 50px 10px rgb(76, 158, 217);
+
+  cursor: pointer;
+}
+
+.sample-button.active {
+  background: rgb(211, 230, 243);
+}
+
+.sample-button.loading {
+  background-image: url("images/loading.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 50%;
+}
+
+.sample-button.disabled {
+  cursor: default;
+}
+
+.sample-button.disabled:after {
+  content: "X";
+  color: rgba(255, 255, 255, 0.1);
+  font-family: verdana;
+  font-size: 12vw;
+  font-weight: bold;
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  height: 100%;
+  line-height: 120%;
+}
+
+.sample-button .config {
+  position: absolute;
+  bottom: 1vw;
+  right: 1vw;
+  width: 2vw;
+  height: 2vw;
+
+  border-radius: 1vw;
+  background: #333;
+}
+
+.config-screen {
+  display: none;
+  position: absolute;
+  z-index: 1;
+
+  top: 1vw;
+  bottom: 1vw;
+  left: 1vw;
+  right: 1vw;
+
+  overflow: scroll;
+
+  background: rgba(0, 0, 0, .8);
+  border-radius: .5em;
+  padding: 1vw;
+
+  color: white;
+}
+
+.config-screen.display {
+  display: block;
+}
+
+.config-screen p {
+  margin: 0 0 1vw 0;
+  overflow: auto;
+}
+
+.config-screen label, .config-screen input {
+  display: block;
+  float: left;
+  width: 50%;
+  overflow: hidden;
+
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1vw;
+  border: none;
+
+  font-size: 3vw;
+}
+
+.config-screen button {
+  font-size: 3vw;
+  padding: 1vw;
+  border: none;
+  background: white;
+}
+
+#save, #cancel {
+  position: absolute;
+  bottom: 0;
+  width: 50%;
+  box-sizing: border-box;
+  background: white;
+}
+
+#save:active, #cancel:active {
+  background: gray;
+}
+
+#save {
+  right: 0;
+}
+
+#cancel {
+  left: 0;
+}
