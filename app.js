@@ -1,12 +1,11 @@
 // TODO
 // 2 fingers tap to lock play
 // main configure screen to select nb of pads
-// also set main volume
 // record/replay
 // drag/n/drop local audio files
 // no zoom on mobile
 // ability to configure volume of each button (gain nodes)
-// coudl also connect effect audio nodes to each button
+// could also connect effect audio nodes to each button
 // Also would be good to abstract the source audio buffer creation so that we can have several types of audio sources.
 
 "use strict";
@@ -24,6 +23,107 @@ function loadSoundURL(url, context, cb) {
   }
   request.send();
 }
+
+function Recorder(sampler) {
+  this.sampler = sampler;
+
+  document.querySelector("#toggle-recording").addEventListener("click", function() {
+    this.isRecording ? this.stopRecording() : this.record();
+  }.bind(this));
+
+  document.querySelector("#toggle-playing").addEventListener("click", function() {
+    this.isPlaying ? this.stop() : this.play();
+  }.bind(this));
+
+  this.onButtonPlay = this.onButtonPlay.bind(this);
+  this.onButtonStop = this.onButtonStop.bind(this);
+}
+
+Recorder.prototype = {
+  record: function() {
+    this.startTime = window.performance.now();
+    this.recorded = [];
+    this.isRecording = true;
+
+    var buttons = this.sampler.getButtons();
+    for (var i = 0; i < buttons.length; i ++) {
+      events.on(buttons[i].button, "play", this.onButtonPlay);
+      events.on(buttons[i].button, "stop", this.onButtonStop);
+    }
+  },
+
+  onButtonPlay: function(button) {
+    if (!this.isRecording) {
+      return;
+    }
+
+    var time = Math.round(window.performance.now() - this.startTime);
+    this.recorded.push({
+      time: time,
+      button: button,
+      isPlay: true
+    })
+  },
+
+  onButtonStop: function(button) {
+    if (!this.isRecording) {
+      return;
+    }
+
+    var time = Math.round(window.performance.now() - this.startTime);
+    this.recorded.push({
+      time: time,
+      button: button,
+      isPlay: false
+    })
+  },
+
+  stopRecording: function() {
+    this.isRecording = false;
+
+    var buttons = this.sampler.getButtons();
+    for (var i = 0; i < buttons.length; i ++) {
+      events.off(buttons[i].button, "play", this.onButtonPlay);
+      events.off(buttons[i].button, "stop", this.onButtonStop);
+    }
+  },
+
+  play: function() {
+    if (this.isRecording || this.isPlaying || !this.recorded.length) {
+      return;
+    }
+
+    this.isPlaying = true;
+    // XXX omg
+    var currentIndex = 0;
+    var playStartTime = window.performance.now();
+    this.playInterval = setInterval(function() {
+      var time = Math.round(window.performance.now() - playStartTime);
+      var currentButton = this.recorded[currentIndex];
+      if (currentButton.time <= time) {
+        if (currentButton.isPlay) {
+          currentButton.button.play();
+        } else {
+          currentButton.button.stop();
+        }
+        currentIndex ++;
+        if (!this.recorded[currentIndex]) {
+          currentIndex = 0;
+          playStartTime = window.performance.now();
+        }
+      }
+    }.bind(this), 50);
+  },
+
+  stop: function() {
+    if (this.isRecording || !this.isPlaying) {
+      return;
+    }
+
+    this.isPlaying = false;
+    clearInterval(this.playInterval);
+  }
+};
 
 // Represents a single button on the pad.
 // Can be bound to a given audio source.
@@ -136,6 +236,8 @@ SampleButton.prototype = {
     this.audioNode.connect(this.sampler.getDestination());
     this.audioNode.buffer = this.buffer;
     this.audioNode.start(0, this.startTime);
+
+    events.emit(this, "play", this);
   },
 
   stop: function() {
@@ -146,6 +248,8 @@ SampleButton.prototype = {
     this._isPlaying = false;
     this.el.classList.remove("active");
     this.audioNode.stop();
+
+    events.emit(this, "stop", this);
   }
 };
 
@@ -303,6 +407,10 @@ Sampler.prototype = {
     return null;
   },
 
+  getButtons: function() {
+    return this.sampleButtons;
+  },
+
   getContext: function() {
     return this.audioContext;
   },
@@ -314,6 +422,7 @@ Sampler.prototype = {
 
 // Let's get started!
 var sampler;
+var recorder;
 window.addEventListener("DOMContentLoaded", function() {
 
   sampler = new Sampler(document.querySelector(".sampler"));
@@ -356,5 +465,7 @@ window.addEventListener("DOMContentLoaded", function() {
   sample.setSoundURL("sounds/system_shutdown.mp3");
   sample.setKeyCode(67);
   sample.setRepeat(true);
+
+  recorder = new Recorder(sampler);
 
 });

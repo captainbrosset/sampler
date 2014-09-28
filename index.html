@@ -2,6 +2,8 @@
 <link rel="stylesheet" type="text/css" href="app.css">
 <header>
   <input id="global-gain" type="range" min="0" max="1" step="0.1" value="1" />
+  <button id="toggle-recording">Start recording</button>
+  <button id="toggle-playing">Play recording</button>
 </header>
 <div class="sampler">
   <div class="config-screen">
@@ -42,4 +44,5 @@
     <li class="sample-button"><span class="config"></span></li>
   </ul>
 </div>
+<script src="events.js"></script>
 <script src="app.js"></script>
