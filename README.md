@@ -1,4 +1,1 @@
-sampler
-=======
-
-Remix the web!
+Assign sound URLs to the sampler buttons, and start remixing the web.
