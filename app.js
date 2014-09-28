@@ -5,7 +5,7 @@
 // main configure screen to select nb of pads
 // record/replay
 // drag/n/drop local audio files
-// mobile viewport (no zoom)
+// no zoom on mobile
 
 "use strict";
 
