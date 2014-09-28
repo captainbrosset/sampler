@@ -84,6 +84,11 @@ SampleButton.prototype = {
     this.keyCode = keyCode;
   },
 
+  // Pass null to revert to the default color
+  setColor: function(color) {
+    this.el.style.color = color || "unset";
+  },
+
   onKeyDown: function(e) {
     if (this.keyCode && e.keyCode === this.keyCode) {
       this.play();
