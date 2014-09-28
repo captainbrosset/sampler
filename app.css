@@ -13,11 +13,15 @@ body {
   font-family: arial;
 }
 
+header {
+  height: 1em;
+}
+
 .sampler {
   position: relative;
 
   width: 100%;
-  height: 100%;
+  height: calc(100% - 1em);
   box-sizing: border-box;
   padding: .3em 0 0 .3em;
 

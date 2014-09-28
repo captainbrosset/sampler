@@ -1,11 +1,13 @@
 // TODO
-// config screen to set url, start, repeat, key
-// also to set icon for button and/or color
 // 2 fingers tap to lock play
 // main configure screen to select nb of pads
+// also set main volume
 // record/replay
 // drag/n/drop local audio files
 // no zoom on mobile
+// ability to configure volume of each button (gain nodes)
+// coudl also connect effect audio nodes to each button
+// Also would be good to abstract the source audio buffer creation so that we can have several types of audio sources.
 
 "use strict";
 
@@ -129,10 +131,9 @@ SampleButton.prototype = {
     this._isPlaying = true;
     this.el.classList.add("active");
 
-    var context = this.sampler.getContext();
-    this.audioNode = context.createBufferSource();
+    this.audioNode = this.sampler.getContext().createBufferSource();
     this.audioNode.loop = !!this.isRepeat;
-    this.audioNode.connect(context.destination); 
+    this.audioNode.connect(this.sampler.getDestination());
     this.audioNode.buffer = this.buffer;
     this.audioNode.start(0, this.startTime);
   },
@@ -262,6 +263,13 @@ function Sampler(el) {
   this.configScreen = new ConfigScreen(this.el.querySelector(".config-screen"));
 
   this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+  this.gain = this.audioContext.createGain();
+  this.gain.connect(this.audioContext.destination);
+  this.gainEl = document.querySelector("#global-gain");
+  this.gainEl.addEventListener("input", function(e) {
+    this.gain.gain.value = this.gainEl.value;
+  }.bind(this));
   
   var els = [].slice.call(this.el.querySelectorAll(".sample-button"));
   this.sampleButtons = [];
@@ -297,6 +305,10 @@ Sampler.prototype = {
 
   getContext: function() {
     return this.audioContext;
+  },
+
+  getDestination: function() {
+    return this.gain;
   }
 };
 
