@@ -135,11 +135,19 @@ body {
   font-size: 3vw;
 }
 
+.config-screen input:focus {
+  background-color: rgb(25, 185, 248);
+}
+
 .config-screen button {
   font-size: 3vw;
   padding: 1vw;
   border: none;
   background: white;
+}
+
+#keyCode {
+  text-transform: uppercase;
 }
 
 #save, #cancel {

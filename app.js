@@ -73,11 +73,14 @@ SampleButton.prototype = {
   },
 
   setStartTime: function(time) {
+    if (typeof(time) !== "number" || isNaN(time)) {
+      return;
+    }
     this.startTime = time;
   },
 
   setRepeat: function(isRepeat) {
-    this.isRepeat = isRepeat;
+    this.isRepeat = !!isRepeat;
   },
 
   setKeyCode: function(keyCode) {
@@ -151,33 +154,101 @@ function ConfigScreen(el) {
   this.saveEl = this.el.querySelector("#save");
   this.cancelEl = this.el.querySelector("#cancel");
 
+  this.urlEl = this.el.querySelector("#url");
+  this.keyCodeEl = this.el.querySelector("#keyCode");
+  this.startTimeEl = this.el.querySelector("#startTime");
+  this.repeatEl = this.el.querySelector("#repeat");
+  this.colorEl = this.el.querySelector("#color");
+
+  document.addEventListener("keydown", function(e) {
+    if (this.isConfigInputEvent(e)) {
+      // Prevent typing in input fields from playing sounds
+      e.stopPropagation();
+
+      // Sample handling for the keyCode input
+      if (e.target === this.keyCodeEl) {
+        this.configuredKeyCode = e.keyCode;
+        this.keyCodeEl.value = String.fromCharCode(e.keyCode);
+        this.keyCodeEl.blur();
+      }
+    }
+
+    if (e.keyCode === 13 && this._isShown) {
+      // on Enter
+      this.save();
+    } else if (e.keyCode === 27 && this._isShown) {
+      // on Escape
+      this.revert();
+    }
+  }.bind(this), true);
+
+  // Empty keyCodeEl on focus
+  this.keyCodeEl.addEventListener("focus", function() {
+    this.keyCodeEl.value = "";
+  }.bind(this));
+
   this.saveEl.addEventListener("click", this.onSaveClick.bind(this));
   this.cancelEl.addEventListener("click", this.onCancelClick.bind(this));
 }
 
 ConfigScreen.prototype = {
+  isConfigInputEvent: function(e) {
+    return e.target === this.urlEl ||
+           e.target === this.keyCodeEl ||
+           e.target === this.startTimeEl ||
+           e.target === this.repeatEl ||
+           e.target === this.colorEl ||
+           e.target === this.saveEl ||
+           e.target === this.cancelEl;
+  },
+
   show: function() {
+    this._isShown = true;
     this.el.classList.add("display");
   },
 
   hide: function() {
+    this._isShown = false;
     this.el.classList.remove("display");
   },
 
   configFor: function(sampleButton) {
-    this.el.querySelector("#url").value = sampleButton.url;
-    this.el.querySelector("#keyCode").value = String.fromCharCode(sampleButton.keyCode);
-    this.el.querySelector("#startTime").value = sampleButton.startTime;
-    this.el.querySelector("#repeat").checked = sampleButton.isRepeat;
+    this.urlEl.value = sampleButton.url;
+    this.keyCodeEl.value = String.fromCharCode(sampleButton.keyCode);
+    this.startTimeEl.value = sampleButton.startTime;
+    this.repeatEl.checked = sampleButton.isRepeat;
+    var colorValue = sampleButton.el.style.color;
+    this.colorEl.value = colorValue === "unset" ? "" : colorValue;
+
+    this.currentButton = sampleButton;
 
     this.show();
   },
 
   onSaveClick: function() {
-    this.hide();
+    this.save();
   },
 
   onCancelClick: function() {
+    this.revert();
+  },
+
+  save: function() {
+    if (this.currentButton) {
+      this.currentButton.setSoundURL(this.urlEl.value);
+      if (this.configuredKeyCode) {
+        this.currentButton.setKeyCode(this.configuredKeyCode);
+        this.configuredKeyCode = null;
+      }
+      this.currentButton.setStartTime(parseInt(this.startTimeEl.value, 10));
+      this.currentButton.setRepeat(this.repeatEl.checked);
+      this.currentButton.setColor(this.colorEl.value);
+    }
+
+    this.hide();
+  },
+
+  revert: function() {
     this.hide();
   }
 };
