@@ -11,83 +11,17 @@
 
 "use strict";
 
-function Knob(el, defaultValue) {
-  this.el = el;
-  this.value = defaultValue || 0;
-
-  this.onSettingStart = this.onSettingStart.bind(this);
-  this.onSettingMove = this.onSettingMove.bind(this);
-  this.onSettingEnd = this.onSettingEnd.bind(this);
-
-  this.el.addEventListener("click", this.onSettingStart);
-}
-
-Knob.prototype = {
-  SENSITIVITY: 20, // nb of px it takes to change the value by .1 increment
-
-  onSettingStart: function(e) {
-    if (this.isSetting) {
-      return;
-    }
-    this.isSetting = true;
-    this.startY = e.clientY;
-
-    this.el.removeEventListener("click", this.onSettingStart);
-    document.addEventListener("mousemove", this.onSettingMove);
-    setTimeout(function() {
-      document.addEventListener("click", this.onSettingEnd);
-    }.bind(this), 1);
-  },
-
-  onSettingMove: function(e) {
-    if (!this.isSetting) {
-      return;
-    }
-
-    var delta = this.startY - e.clientY;
-    if (Math.abs(delta) >= this.SENSITIVITY) {
-      this.updateValue(Math.floor(delta / this.SENSITIVITY) / 10);
-      this.startY = e.clientY;
-    }
-  },
-
-  onSettingEnd: function(e) {
-    if (!this.isSetting) {
-      return;
-    }
-    this.isSetting = false;
-    this.startY = null;
-
-    this.el.addEventListener("click", this.onSettingStart);
-    document.removeEventListener("mousemove", this.onSettingMove);
-    document.removeEventListener("click", this.onSettingEnd);
-  },
-
-  updateValue: function(increment) {
-    var value = Math.round((this.value + increment) * 10) / 10;
-    if (value > 1) {
-      value = 1;
-    }
-    if (value < 0) {
-      value = 0;
-    }
-    this.value = value;
-    var angle = Math.round(360 * value)
-    this.el.style.transform = "rotate(" + angle + "deg)";
-    events.emit(this, "update", this.value);
-  }
-};
-
-
-
 function Recorder(sampler) {
   this.sampler = sampler;
 
-  document.querySelector("#toggle-recording").addEventListener("click", function() {
+  this.recordButtonEl = document.querySelector("#toggle-recording");
+  this.playButtonEl = document.querySelector("#toggle-playing");
+
+  this.recordButtonEl.addEventListener("click", function() {
     this.isRecording ? this.stopRecording() : this.record();
   }.bind(this));
 
-  document.querySelector("#toggle-playing").addEventListener("click", function() {
+  this.playButtonEl.addEventListener("click", function() {
     this.isPlaying ? this.stop() : this.play();
   }.bind(this));
 
@@ -97,6 +31,14 @@ function Recorder(sampler) {
 
 Recorder.prototype = {
   record: function() {
+    if (this.isRecording) {
+      return;
+    }
+
+    if (this.isPlaying) {
+      this.stop();
+    }
+
     this.startTime = window.performance.now();
     this.recorded = [];
     this.isRecording = true;
@@ -106,6 +48,9 @@ Recorder.prototype = {
       events.on(buttons[i].button, "play", this.onButtonPlay);
       events.on(buttons[i].button, "stop", this.onButtonStop);
     }
+
+    this.recordButtonEl.classList.add("recording");
+    this.recordButtonEl.querySelector("em").textContent = "stop";
   },
 
   onButtonPlay: function(button) {
@@ -135,6 +80,10 @@ Recorder.prototype = {
   },
 
   stopRecording: function() {
+    if (!this.isRecording) {
+      return;
+    }
+
     this.isRecording = false;
 
     var buttons = this.sampler.getButtons();
@@ -142,10 +91,19 @@ Recorder.prototype = {
       events.off(buttons[i].button, "play", this.onButtonPlay);
       events.off(buttons[i].button, "stop", this.onButtonStop);
     }
+
+    this.recordButtonEl.classList.remove("recording");
+    this.recordButtonEl.querySelector("em").textContent = "record";
   },
 
   play: function() {
-    if (this.isRecording || this.isPlaying || !this.recorded.length) {
+    if (this.isPlaying) {
+      return;
+    }
+
+    if (this.isRecording) {
+      this.stopRecording();
+    } else if (!this.recorded || !this.recorded.length) {
       return;
     }
 
@@ -169,6 +127,9 @@ Recorder.prototype = {
         }
       }
     }.bind(this), 50);
+
+    this.playButtonEl.classList.add("playing");
+    this.playButtonEl.querySelector("em").textContent = "stop";
   },
 
   stop: function() {
@@ -178,6 +139,14 @@ Recorder.prototype = {
 
     this.isPlaying = false;
     clearInterval(this.playInterval);
+
+    var buttons = this.sampler.getButtons();
+    for (var i = 0; i < buttons.length; i ++) {
+      buttons[i].button.stop();
+    }
+
+    this.playButtonEl.classList.remove("playing");
+    this.playButtonEl.querySelector("em").textContent = "play";
   }
 };
 
@@ -192,7 +161,11 @@ function loadSoundURL(url, context, cb) {
       cb(null);
     });
   }
-  request.send();
+  try {
+    request.send();
+  } catch (e) {
+    cb(null);
+  }
 }
 
 
@@ -416,7 +389,7 @@ ConfigScreen.prototype = {
         this.currentButton.setKeyCode(this.configuredKeyCode);
         this.configuredKeyCode = null;
       }
-      this.currentButton.setStartTime(parseInt(this.startTimeEl.value, 10));
+      this.currentButton.setStartTime(parseFloat(this.startTimeEl.value));
       this.currentButton.setRepeat(this.repeatEl.checked);
       this.currentButton.setColor(this.colorEl.value);
     }

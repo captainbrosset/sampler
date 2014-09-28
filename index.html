@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <link rel="stylesheet" type="text/css" href="app.css">
 <header>
-  <div id="global-gain" class="knob"></div>
-  <button id="toggle-recording">Start recording</button>
-  <button id="toggle-playing">Play recording</button>
+  <div class="header-control" id="toggle-recording"><em>record</em></div>
+  <div class="header-control" id="toggle-playing"><em>play</em></div>
 </header>
 <div class="sampler">
   <div class="config-screen">
@@ -42,53 +41,102 @@
     <li class="sample-button"><span class="config"></span></li>
     <li class="sample-button"><span class="config"></span></li>
     <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
+    <li class="sample-button"><span class="config"></span></li>
   </ul>
 </div>
 <script src="events.js"></script>
 <script src="app.js"></script>
 <script>
+var defaultButtons = [{
+  url: "sounds/MMG_808-1.wav",
+  keyCode: 49,
+  color: "#E84BAB"
+}, {
+  url: "sounds/MMG_Snare-2.wav",
+  keyCode: 50,
+  color: "#FF60F4"
+}, {
+  url: "sounds/MMG_Cym-2.wav",
+  keyCode: 51,
+  color: "#FF9DBA"
+}, {
+  url: "sounds/MMG_Cym-4.wav",
+  keyCode: 52,
+  color: "#E84BAB"
+}, {
+  url: "sounds/MMG_FX-140-BPM-Riser.wav",
+  keyCode: 81,
+  color: "#B99EC5"
+}, {
+  url: "sounds/MMG_Hi-Hat-5.wav",
+  keyCode: 87,
+  color: "#B99EC5"
+}, {
+  url: "sounds/MMG_Kick-1.wav",
+  keyCode: 69,
+  color: "#D34BE8"
+}, {
+  url: "sounds/MMG_Kick-9.wav",
+  keyCode: 82,
+  color: "#B99EC5"
+}, {
+  url: "sounds/MMG_Perc_Bongo-2.wav",
+  keyCode: 65,
+  color: "#D34BE8"
+}, {
+  url: "sounds/MMG_Perc_Shake.wav",
+  keyCode: 83,
+  color: "#FF60F4"
+}, {
+  url: "sounds/MMG_Perc_Tri.wav",
+  keyCode: 68,
+  color: "#FF9DBA"
+}, {
+  url: "sounds/MMG_Ride-1.wav",
+  keyCode: 70,
+  color: "#FF60F4"
+}, {
+  url: "sounds/MMG_Snare-2.wav",
+  keyCode: 90,
+  color: "#B99EC5"
+}, {
+  url: "sounds/MMG_Perc_Bongo-1.wav",
+  keyCode: 88,
+  color: "#D34BE8"
+}, {
+  url: "sounds/MMG_Vox-Boss.wav",
+  keyCode: 67,
+  color: "#E84BAB"
+}, {
+  url: "sounds/MMG_Vox-Maybach Music Tag.wav",
+  keyCode: 86,
+  color: "#D34BE8"
+}];
+
 var sampler;
 var recorder;
 
 window.addEventListener("DOMContentLoaded", function() {
+  // Construct the sampler
   sampler = new Sampler(document.querySelector(".sampler"));
 
-  var sample = sampler.getButton(0);
-  sample.setSoundURL("sounds/BD0000.mp3");
-  sample.setKeyCode(81);
-  var sample = sampler.getButton(1);
-  sample.setSoundURL("sounds/CB.mp3");
-  sample.setKeyCode(87);
-  var sample = sampler.getButton(2);
-  sample.setSoundURL("sounds/CH.mp3");
-  sample.setKeyCode(69);
-  var sample = sampler.getButton(3);
-  sample.setSoundURL("sounds/CL.mp3");
-  sample.setKeyCode(65);
-  var sample = sampler.getButton(4);
-  sample.setSoundURL("sounds/memoryloss.mp3");
-  sample.setKeyCode(83);
-  sample.setRepeat(true);
-  var sample = sampler.getButton(5);
-  sample.setSoundURL("sounds/scifi5.mp3");
-  sample.setKeyCode(68);
-  sample.setRepeat(true);
-  var sample = sampler.getButton(6);
-  sample.setSoundURL("sounds/SD0010.mp3");
-  sample.setKeyCode(90);
-  var sample = sampler.getButton(7);
-  sample.setSoundURL("sounds/SD0050.mp3");
-  sample.setKeyCode(88);
-  var sample = sampler.getButton(8);
-  sample.setSoundURL("sounds/system_shutdown.mp3");
-  sample.setKeyCode(67);
-  sample.setRepeat(true);
+  // Assign some default sounds to it
+  for (var i = 0; i < defaultButtons.length; i ++) {
+    var sample = sampler.getButton(i);
+    sample.setSoundURL(defaultButtons[i].url);
+    sample.setKeyCode(defaultButtons[i].keyCode);
+    sample.setColor(defaultButtons[i].color);
+    sample.setStartTime(defaultButtons[i].startTime);
+    sample.setRepeat(defaultButtons[i].isRepeat);
+  }
 
-  var globalGain = new Knob(document.querySelector("#global-gain"), 1);
-  events.on(globalGain, "update", function(value) {
-    sampler.setGain(value);
-  });
-
+  // Construct the recorder
   recorder = new Recorder(sampler);
 });
 </script>
