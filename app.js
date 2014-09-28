@@ -1,7 +1,8 @@
 // TODO
+// need bigger record and play toggle buttons + keyboard keys
+// record replay looping is shit
 // 2 fingers tap to lock play
-// main configure screen to select nb of pads
-// record/replay
+// main configure screen to select nb of buttons
 // drag/n/drop local audio files
 // no zoom on mobile
 // ability to configure volume of each button (gain nodes)
@@ -10,19 +11,74 @@
 
 "use strict";
 
-function loadSoundURL(url, context, cb) {
-  var request = new XMLHttpRequest();
-  request.open('GET', url, true);
-  request.responseType = 'arraybuffer';
-  request.onload = function() {
-    context.decodeAudioData(request.response, function(buffer) {
-      cb(buffer);
-    }, function() {
-      cb(null);
-    });
-  }
-  request.send();
+function Knob(el, defaultValue) {
+  this.el = el;
+  this.value = defaultValue || 0;
+
+  this.onSettingStart = this.onSettingStart.bind(this);
+  this.onSettingMove = this.onSettingMove.bind(this);
+  this.onSettingEnd = this.onSettingEnd.bind(this);
+
+  this.el.addEventListener("click", this.onSettingStart);
 }
+
+Knob.prototype = {
+  SENSITIVITY: 20, // nb of px it takes to change the value by .1 increment
+
+  onSettingStart: function(e) {
+    if (this.isSetting) {
+      return;
+    }
+    this.isSetting = true;
+    this.startY = e.clientY;
+
+    this.el.removeEventListener("click", this.onSettingStart);
+    document.addEventListener("mousemove", this.onSettingMove);
+    setTimeout(function() {
+      document.addEventListener("click", this.onSettingEnd);
+    }.bind(this), 1);
+  },
+
+  onSettingMove: function(e) {
+    if (!this.isSetting) {
+      return;
+    }
+
+    var delta = this.startY - e.clientY;
+    if (Math.abs(delta) >= this.SENSITIVITY) {
+      this.updateValue(Math.floor(delta / this.SENSITIVITY) / 10);
+      this.startY = e.clientY;
+    }
+  },
+
+  onSettingEnd: function(e) {
+    if (!this.isSetting) {
+      return;
+    }
+    this.isSetting = false;
+    this.startY = null;
+
+    this.el.addEventListener("click", this.onSettingStart);
+    document.removeEventListener("mousemove", this.onSettingMove);
+    document.removeEventListener("click", this.onSettingEnd);
+  },
+
+  updateValue: function(increment) {
+    var value = Math.round((this.value + increment) * 10) / 10;
+    if (value > 1) {
+      value = 1;
+    }
+    if (value < 0) {
+      value = 0;
+    }
+    this.value = value;
+    var angle = Math.round(360 * value)
+    this.el.style.transform = "rotate(" + angle + "deg)";
+    events.emit(this, "update", this.value);
+  }
+};
+
+
 
 function Recorder(sampler) {
   this.sampler = sampler;
@@ -124,6 +180,21 @@ Recorder.prototype = {
     clearInterval(this.playInterval);
   }
 };
+
+function loadSoundURL(url, context, cb) {
+  var request = new XMLHttpRequest();
+  request.open('GET', url, true);
+  request.responseType = 'arraybuffer';
+  request.onload = function() {
+    context.decodeAudioData(request.response, function(buffer) {
+      cb(buffer);
+    }, function() {
+      cb(null);
+    });
+  }
+  request.send();
+}
+
 
 // Represents a single button on the pad.
 // Can be bound to a given audio source.
@@ -370,10 +441,6 @@ function Sampler(el) {
 
   this.gain = this.audioContext.createGain();
   this.gain.connect(this.audioContext.destination);
-  this.gainEl = document.querySelector("#global-gain");
-  this.gainEl.addEventListener("input", function(e) {
-    this.gain.gain.value = this.gainEl.value;
-  }.bind(this));
   
   var els = [].slice.call(this.el.querySelectorAll(".sample-button"));
   this.sampleButtons = [];
@@ -417,55 +484,9 @@ Sampler.prototype = {
 
   getDestination: function() {
     return this.gain;
+  },
+
+  setGain: function(gain) {
+    this.gain.gain.value = gain;
   }
 };
-
-// Let's get started!
-var sampler;
-var recorder;
-window.addEventListener("DOMContentLoaded", function() {
-
-  sampler = new Sampler(document.querySelector(".sampler"));
-
-  var sample = sampler.getButton(0);
-  sample.setSoundURL("sounds/BD0000.mp3");
-  sample.setKeyCode(81);
-
-  var sample = sampler.getButton(1);
-  sample.setSoundURL("sounds/CB.mp3");
-  sample.setKeyCode(87);
-
-  var sample = sampler.getButton(2);
-  sample.setSoundURL("sounds/CH.mp3");
-  sample.setKeyCode(69);
-
-  var sample = sampler.getButton(3);
-  sample.setSoundURL("sounds/CL.mp3");
-  sample.setKeyCode(65);
-
-  var sample = sampler.getButton(4);
-  sample.setSoundURL("sounds/memoryloss.mp3");
-  sample.setKeyCode(83);
-  sample.setRepeat(true);
-
-  var sample = sampler.getButton(5);
-  sample.setSoundURL("sounds/scifi5.mp3");
-  sample.setKeyCode(68);
-  sample.setRepeat(true);
-
-  var sample = sampler.getButton(6);
-  sample.setSoundURL("sounds/SD0010.mp3");
-  sample.setKeyCode(90);
-
-  var sample = sampler.getButton(7);
-  sample.setSoundURL("sounds/SD0050.mp3");
-  sample.setKeyCode(88);
-
-  var sample = sampler.getButton(8);
-  sample.setSoundURL("sounds/system_shutdown.mp3");
-  sample.setKeyCode(67);
-  sample.setRepeat(true);
-
-  recorder = new Recorder(sampler);
-
-});

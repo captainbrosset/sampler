@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <link rel="stylesheet" type="text/css" href="app.css">
 <header>
-  <input id="global-gain" type="range" min="0" max="1" step="0.1" value="1" />
+  <div id="global-gain" class="knob"></div>
   <button id="toggle-recording">Start recording</button>
   <button id="toggle-playing">Play recording</button>
 </header>
@@ -46,3 +46,49 @@
 </div>
 <script src="events.js"></script>
 <script src="app.js"></script>
+<script>
+var sampler;
+var recorder;
+
+window.addEventListener("DOMContentLoaded", function() {
+  sampler = new Sampler(document.querySelector(".sampler"));
+
+  var sample = sampler.getButton(0);
+  sample.setSoundURL("sounds/BD0000.mp3");
+  sample.setKeyCode(81);
+  var sample = sampler.getButton(1);
+  sample.setSoundURL("sounds/CB.mp3");
+  sample.setKeyCode(87);
+  var sample = sampler.getButton(2);
+  sample.setSoundURL("sounds/CH.mp3");
+  sample.setKeyCode(69);
+  var sample = sampler.getButton(3);
+  sample.setSoundURL("sounds/CL.mp3");
+  sample.setKeyCode(65);
+  var sample = sampler.getButton(4);
+  sample.setSoundURL("sounds/memoryloss.mp3");
+  sample.setKeyCode(83);
+  sample.setRepeat(true);
+  var sample = sampler.getButton(5);
+  sample.setSoundURL("sounds/scifi5.mp3");
+  sample.setKeyCode(68);
+  sample.setRepeat(true);
+  var sample = sampler.getButton(6);
+  sample.setSoundURL("sounds/SD0010.mp3");
+  sample.setKeyCode(90);
+  var sample = sampler.getButton(7);
+  sample.setSoundURL("sounds/SD0050.mp3");
+  sample.setKeyCode(88);
+  var sample = sampler.getButton(8);
+  sample.setSoundURL("sounds/system_shutdown.mp3");
+  sample.setKeyCode(67);
+  sample.setRepeat(true);
+
+  var globalGain = new Knob(document.querySelector("#global-gain"), 1);
+  events.on(globalGain, "update", function(value) {
+    sampler.setGain(value);
+  });
+
+  recorder = new Recorder(sampler);
+});
+</script>
