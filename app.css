@@ -70,16 +70,16 @@ body {
 }
 
 .sample-button.disabled:after {
-  content: "X";
-  color: rgba(255, 255, 255, 0.1);
-  font-family: verdana;
-  font-size: 12vw;
-  font-weight: bold;
+  content: "";
+  background: rgba(255, 255, 255, 0.3);
   position: absolute;
-  width: 100%;
-  text-align: center;
-  height: 100%;
-  line-height: 120%;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 5%;
+
+  transform-origin: top left;
+  transform: rotate(45deg);
 }
 
 .sample-button .config {
