@@ -1,14 +1,3 @@
-// TODO
-// need bigger record and play toggle buttons + keyboard keys
-// record replay looping is shit
-// 2 fingers tap to lock play
-// main configure screen to select nb of buttons
-// drag/n/drop local audio files
-// no zoom on mobile
-// ability to configure volume of each button (gain nodes)
-// could also connect effect audio nodes to each button
-// Also would be good to abstract the source audio buffer creation so that we can have several types of audio sources.
-
 "use strict";
 
 function Recorder(sampler) {
