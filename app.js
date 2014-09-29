@@ -39,7 +39,7 @@ function SampleButton(el, sampler) {
   document.addEventListener("keydown", this.onKeyDown);
   document.addEventListener("keyup", this.onKeyUp);
 
-  if (window.ontouchstart) {
+  if ("ontouchstart" in document.documentElement) {
     this.el.addEventListener("touchstart", this.onTouchStart);
     this.el.addEventListener("touchend", this.onTouchEnd);    
   } else {
