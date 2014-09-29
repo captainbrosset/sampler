@@ -42,8 +42,8 @@ function SampleButton(el, sampler) {
   this.el.addEventListener("mousedown", this.onMouseDown);
   this.el.addEventListener("mouseup", this.onMouseUp);
 
-  this.el.addEventListener("touchstart", this.onTouchStart);
-  this.el.addEventListener("touchend", this.onTouchEnd);
+  // this.el.addEventListener("touchstart", this.onTouchStart);
+  // this.el.addEventListener("touchend", this.onTouchEnd);
 
   this.startTime = 0;
 
