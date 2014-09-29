@@ -1,8 +1,18 @@
 <!DOCTYPE html>
-<link rel="stylesheet" type="text/css" href="app.css">
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width user-scalable=no">
+  <title>sampler</title>
+  <link rel="stylesheet" type="text/css" href="app.css">
+</head>
+<body>
+
 <header>
-  <div class="header-control" id="toggle-recording"><em>record</em></div>
-  <div class="header-control" id="toggle-playing"><em>play</em></div>
+  <div class="header-control track-recorder"><em>track 1</em></div>
+  <div class="header-control track-recorder"><em>track 2</em></div>
+  <div class="header-control track-recorder"><em>track 3</em></div>
+  <div class="header-control track-recorder"><em>track 4</em></div>
 </header>
 <div class="sampler">
   <div class="config-screen">
@@ -137,6 +147,9 @@ window.addEventListener("DOMContentLoaded", function() {
   }
 
   // Construct the recorder
-  recorder = new Recorder(sampler);
+  recorder = new Recorder(document.querySelector("header"), sampler);
 });
 </script>
+
+</body>
+</html>

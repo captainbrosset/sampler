@@ -1,48 +1,145 @@
 "use strict";
 
-function Recorder(sampler) {
+var BPM = 120;
+
+function Metronome(sampler) {
   this.sampler = sampler;
-
-  this.recordButtonEl = document.querySelector("#toggle-recording");
-  this.playButtonEl = document.querySelector("#toggle-playing");
-
-  this.recordButtonEl.addEventListener("click", function() {
-    this.isRecording ? this.stopRecording() : this.record();
-  }.bind(this));
-
-  this.playButtonEl.addEventListener("click", function() {
-    this.isPlaying ? this.stop() : this.play();
-  }.bind(this));
-
-  this.onButtonPlay = this.onButtonPlay.bind(this);
-  this.onButtonStop = this.onButtonStop.bind(this);
 }
 
-Recorder.prototype = {
+Metronome.prototype = {
+  start: function() {
+    if (this.isStarted) {
+      return;
+    }
+
+    this.interval = setInterval(this.tick.bind(this), 60 * 1000 / BPM);
+    this.isStarted = true;
+  },
+
+  stop: function() {
+    if (!this.isStarted) {
+      return;
+    }
+
+    clearInterval(this.interval);
+    this.isStarted = false;
+  },
+
+  tick: function() {
+    events.emit(this, "tick");
+
+    var oscillator = sampler.getContext().createOscillator();
+    oscillator.connect(sampler.getDestination());
+    oscillator.start();
+    setTimeout(function() {
+      oscillator.stop();
+    }.bind(this), 100);
+  }
+};
+
+function Recorder(el, sampler) {
+  this.el = el;
+  this.sampler = sampler;
+
+  this.metronome = new Metronome(sampler);
+
+  var els = [].slice.call(this.el.querySelectorAll(".track-recorder"));
+
+  this.trackRecorders = [];
+  for (var i = 0; i < els.length; i ++) {
+    this.trackRecorders.push(new TrackRecorder(els[i], this));
+  }
+}
+
+function TrackRecorder(el, recorder) {
+  this.el = el;
+
+  this.sampler = recorder.sampler;
+  this.metronome = recorder.metronome;
+
+  this.onSamplePlay = this.onSamplePlay.bind(this);
+  this.onSampleStop = this.onSampleStop.bind(this);
+  this.onClick = this.onClick.bind(this);
+  this.onTick = this.onTick.bind(this);
+
+  this.textContent = this.el.textContent;
+  this.el.addEventListener("click", this.onClick);
+}
+
+TrackRecorder.prototype = {
+  onClick: function() {
+    if (this.isRecording) {
+      this.stopRecording();
+      this.play();
+    } else {
+      this.stop();
+      this.record();
+    }
+  },
+
   record: function() {
     if (this.isRecording) {
       return;
     }
 
-    if (this.isPlaying) {
-      this.stop();
-    }
+    // The way the recording is done is by only starting to record after the 
+    // next tick, and stopping after the next tick too.
+    // This way we're sure to make a loop that actually loops correctly.
+    this.metronome.start();
+    var doStartRecord = function() {
+      events.off(this.metronome, "tick", doStartRecord);
 
-    this.startTime = window.performance.now();
-    this.recorded = [];
-    this.isRecording = true;
+      this.startTime = window.performance.now();
+      this.recorded = [];
+      this.isRecording = true;
 
-    var buttons = this.sampler.getButtons();
-    for (var i = 0; i < buttons.length; i ++) {
-      events.on(buttons[i].button, "play", this.onButtonPlay);
-      events.on(buttons[i].button, "stop", this.onButtonStop);
-    }
+      var buttons = this.sampler.getButtons();
+      for (var i = 0; i < buttons.length; i ++) {
+        events.on(buttons[i].button, "play", this.onSamplePlay);
+        events.on(buttons[i].button, "stop", this.onSampleStop);
+      }
 
-    this.recordButtonEl.classList.add("recording");
-    this.recordButtonEl.querySelector("em").textContent = "stop";
+      this.el.classList.add("recording");
+      this.el.querySelector("em").textContent = "stop";
+    }.bind(this);
+
+    events.on(this.metronome, "tick", doStartRecord);
+
+    events.on(this.metronome, "tick", this.onTick);
   },
 
-  onButtonPlay: function(button) {
+  onTick: function() {
+
+    this.el.classList.toggle("ticking");
+  },
+
+  stopRecording: function() {
+    if (!this.isRecording) {
+      return;
+    }
+
+    var doStopRecord = function() {
+      events.off(this.metronome, "tick", doStopRecord);
+      this.metronome.stop();
+      this.isRecording = false;
+
+      var buttons = this.sampler.getButtons();
+      for (var i = 0; i < buttons.length; i ++) {
+        events.off(buttons[i].button, "play", this.onSamplePlay);
+        events.off(buttons[i].button, "stop", this.onSampleStop);
+      }
+
+      this.el.classList.remove("recording");
+      this.el.classList.remove("ticking");
+      this.el.querySelector("em").textContent = this.textContent;
+    }.bind(this);
+
+    events.on(this.metronome, "tick", doStopRecord);
+
+    events.off(this.metronome, "tick", this.onTick);
+  },
+
+  onSamplePlay: function(button) {
     if (!this.isRecording) {
       return;
     }
@@ -55,7 +152,7 @@ Recorder.prototype = {
     })
   },
 
-  onButtonStop: function(button) {
+  onSampleStop: function(button) {
     if (!this.isRecording) {
       return;
     }
@@ -68,31 +165,8 @@ Recorder.prototype = {
     })
   },
 
-  stopRecording: function() {
-    if (!this.isRecording) {
-      return;
-    }
-
-    this.isRecording = false;
-
-    var buttons = this.sampler.getButtons();
-    for (var i = 0; i < buttons.length; i ++) {
-      events.off(buttons[i].button, "play", this.onButtonPlay);
-      events.off(buttons[i].button, "stop", this.onButtonStop);
-    }
-
-    this.recordButtonEl.classList.remove("recording");
-    this.recordButtonEl.querySelector("em").textContent = "record";
-  },
-
   play: function() {
-    if (this.isPlaying) {
-      return;
-    }
-
-    if (this.isRecording) {
-      this.stopRecording();
-    } else if (!this.recorded || !this.recorded.length) {
+    if (this.isPlaying || !this.recorded || !this.recorded.length) {
       return;
     }
 
@@ -105,9 +179,9 @@ Recorder.prototype = {
       var currentButton = this.recorded[currentIndex];
       if (currentButton.time <= time) {
         if (currentButton.isPlay) {
-          currentButton.button.play();
+          currentButton.button.play(true);
         } else {
-          currentButton.button.stop();
+          currentButton.button.stop(true);
         }
         currentIndex ++;
         if (!this.recorded[currentIndex]) {
@@ -116,9 +190,6 @@ Recorder.prototype = {
         }
       }
     }.bind(this), 50);
-
-    this.playButtonEl.classList.add("playing");
-    this.playButtonEl.querySelector("em").textContent = "stop";
   },
 
   stop: function() {
@@ -133,9 +204,6 @@ Recorder.prototype = {
     for (var i = 0; i < buttons.length; i ++) {
       buttons[i].button.stop();
     }
-
-    this.playButtonEl.classList.remove("playing");
-    this.playButtonEl.querySelector("em").textContent = "play";
   }
 };
 
@@ -256,7 +324,7 @@ SampleButton.prototype = {
     this.stop();
   },
 
-  play: function() {
+  play: function(noEmit) {
     if (this._isPlaying || !this.buffer) {
       return;
     }
@@ -270,10 +338,12 @@ SampleButton.prototype = {
     this.audioNode.buffer = this.buffer;
     this.audioNode.start(0, this.startTime);
 
-    events.emit(this, "play", this);
+    if (!noEmit) {
+      events.emit(this, "play", this);
+    }
   },
 
-  stop: function() {
+  stop: function(noEmit) {
     if (!this._isPlaying || !this.buffer) {
       return;
     }
@@ -282,7 +352,9 @@ SampleButton.prototype = {
     this.el.classList.remove("active");
     this.audioNode.stop();
 
-    events.emit(this, "stop", this);
+    if (!noEmit) {
+      events.emit(this, "stop", this);
+    }
   }
 };
 
