@@ -39,7 +39,7 @@ function SampleButton(el, sampler) {
   document.addEventListener("keydown", this.onKeyDown);
   document.addEventListener("keyup", this.onKeyUp);
 
-  if ("ontouchstart" in document.documentElement) {
+  if ("ontouchstart" in window) {
     this.el.addEventListener("touchstart", this.onTouchStart);
     this.el.addEventListener("touchend", this.onTouchEnd);    
   } else {
@@ -111,12 +111,19 @@ SampleButton.prototype = {
   },
 
   onTouchStart: function(e) {
-    // manage double tap
+    if (e.touches.length === 2) {
+      this.isLocked = true;
+    } else {
+      this.stop();
+      this.isLocked = false;
+    }
     this.play();
   },
 
   onTouchEnd: function(e) {
-    this.stop();
+    if (!this.isLocked) {
+      this.stop();
+    }
   },
 
   play: function(noEmit) {
