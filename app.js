@@ -111,7 +111,9 @@ SampleButton.prototype = {
   },
 
   onTouchStart: function(e) {
-    if (e.touches.length === 2) {
+    if (e.touches.length === 2 &&
+        e.touches[0].target === this.el &&
+        e.touches[1].target === this.el) {
       this.isLocked = true;
     } else {
       this.stop();
