@@ -39,11 +39,13 @@ function SampleButton(el, sampler) {
   document.addEventListener("keydown", this.onKeyDown);
   document.addEventListener("keyup", this.onKeyUp);
 
-  this.el.addEventListener("mousedown", this.onMouseDown);
-  this.el.addEventListener("mouseup", this.onMouseUp);
-
-  // this.el.addEventListener("touchstart", this.onTouchStart);
-  // this.el.addEventListener("touchend", this.onTouchEnd);
+  if (window.ontouchstart) {
+    this.el.addEventListener("touchstart", this.onTouchStart);
+    this.el.addEventListener("touchend", this.onTouchEnd);    
+  } else {
+    this.el.addEventListener("mousedown", this.onMouseDown);
+    this.el.addEventListener("mouseup", this.onMouseUp);
+  }
 
   this.startTime = 0;
 
