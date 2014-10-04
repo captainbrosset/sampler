@@ -31,6 +31,10 @@
       <input id="color" />
     </p>
     <p>
+      <label for="gain">Gain</label>
+      <input id="gain" type="range" min="0" max="1" value="1" step="0.1" />
+    </p>
+    <p>
       <button id="cancel">Cancel</button>
       <button id="save">Save</button>
     </p>
@@ -63,6 +67,7 @@ var defaultButtons = [{
 }, {
   url: "sounds/MMG_Snare-2.wav",
   keyCode: 50,
+  gain: .8
 }, {
   url: "sounds/MMG_Cym-2.wav",
   keyCode: 51,
@@ -134,6 +139,7 @@ window.addEventListener("DOMContentLoaded", function() {
     sample.setColor(defaultButtons[i].color);
     sample.setStartTime(defaultButtons[i].startTime);
     sample.setRepeat(defaultButtons[i].isRepeat);
+    sample.setGain(defaultButtons[i].gain || 1);
   }
 
 });

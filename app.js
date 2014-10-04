@@ -48,6 +48,7 @@ function SampleButton(el, sampler) {
   }
 
   this.startTime = 0;
+  this.gain = 1;
 
   this.config = this.el.querySelector(".config");
   this.config.addE
@@ -88,6 +89,10 @@ SampleButton.prototype = {
   // Pass null to revert to the default color
   setColor: function(color) {
     this.el.style.color = color || "unset";
+  },
+
+  setGain: function(gain) {
+    this.gain = gain;
   },
 
   onKeyDown: function(e) {
@@ -136,9 +141,13 @@ SampleButton.prototype = {
     this._isPlaying = true;
     this.el.classList.add("active");
 
+    this.gainNode = this.sampler.getContext().createGain();
+    this.gainNode.gain.value = this.gain;
+    this.gainNode.connect(this.sampler.getDestination());
+
     this.audioNode = this.sampler.getContext().createBufferSource();
     this.audioNode.loop = !!this.isRepeat;
-    this.audioNode.connect(this.sampler.getDestination());
+    this.audioNode.connect(this.gainNode);
     this.audioNode.buffer = this.buffer;
     this.audioNode.start(0, this.startTime);
 
@@ -154,7 +163,7 @@ SampleButton.prototype = {
 
     this._isPlaying = false;
     this.el.classList.remove("active");
-    this.audioNode.stop();
+    this.audioNode.stop(0);
 
     if (!noEmit) {
       events.emit(this, "stop", this);
@@ -173,6 +182,7 @@ function ConfigScreen(el) {
   this.startTimeEl = this.el.querySelector("#startTime");
   this.repeatEl = this.el.querySelector("#repeat");
   this.colorEl = this.el.querySelector("#color");
+  this.gainEl = this.el.querySelector("#gain");
 
   document.addEventListener("keydown", function(e) {
     if (this.isConfigInputEvent(e)) {
@@ -212,6 +222,7 @@ ConfigScreen.prototype = {
            e.target === this.startTimeEl ||
            e.target === this.repeatEl ||
            e.target === this.colorEl ||
+           e.target === this.gainEl ||
            e.target === this.saveEl ||
            e.target === this.cancelEl;
   },
@@ -233,6 +244,7 @@ ConfigScreen.prototype = {
     this.repeatEl.checked = sampleButton.isRepeat;
     var colorValue = sampleButton.el.style.color;
     this.colorEl.value = colorValue === "unset" ? "" : colorValue;
+    this.gainEl.value = sampleButton.gain;
 
     this.currentButton = sampleButton;
 
@@ -257,6 +269,7 @@ ConfigScreen.prototype = {
       this.currentButton.setStartTime(parseFloat(this.startTimeEl.value));
       this.currentButton.setRepeat(this.repeatEl.checked);
       this.currentButton.setColor(this.colorEl.value);
+      this.currentButton.setGain(this.gainEl.value);
     }
 
     this.hide();
